@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
@@ -5,6 +6,7 @@ import PredictionForm from '../components/PredictionForm';
 import DiseasePredictor from '../components/DiseasePredictor';
 import WeatherDisplay from '../components/WeatherDisplay';
 import Footer from '../components/Footer';
+import AskDoubt from '../components/AskDoubt';
 import { getTranslation } from '../utils/translationUtils';
 
 const Index = () => {
@@ -169,6 +171,8 @@ const Index = () => {
         {/* Main Content Sections */}
         <section className="py-16">
           <div className="container mx-auto px-6 space-y-16">
+            <AskDoubt language={language} />
+            
             <PredictionForm 
               language={language} 
               onFormSubmit={handlePredictionFormSubmit} 
