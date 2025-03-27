@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
@@ -10,7 +9,13 @@ import { getTranslation } from '../utils/translationUtils';
 
 const Index = () => {
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
-  const [activeDistrict, setActiveDistrict] = useState('Lucknow');
+  const [activeDistrict, setActiveDistrict] = useState<string | null>(null);
+  const [showWeather, setShowWeather] = useState(false);
+  
+  const handlePredictionFormSubmit = (district: string) => {
+    setActiveDistrict(district);
+    setShowWeather(true);
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -164,11 +169,22 @@ const Index = () => {
         {/* Main Content Sections */}
         <section className="py-16">
           <div className="container mx-auto px-6 space-y-16">
-            <PredictionForm language={language} />
+            <PredictionForm 
+              language={language} 
+              onFormSubmit={handlePredictionFormSubmit} 
+            />
+            
+            {showWeather && activeDistrict && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <WeatherDisplay language={language} district={activeDistrict} />
+              </motion.div>
+            )}
             
             <DiseasePredictor language={language} />
-            
-            <WeatherDisplay language={language} district={activeDistrict} />
           </div>
         </section>
       </main>

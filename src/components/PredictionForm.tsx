@@ -14,6 +14,7 @@ type FormData = {
 
 type PredictionFormProps = {
   language: 'en' | 'hi';
+  onFormSubmit?: (district: string) => void;
 };
 
 const soilTypes = [
@@ -29,7 +30,7 @@ const districts = [
   'Aligarh', 'Saharanpur', 'Gorakhpur', 'Faizabad', 'Jhansi'
 ];
 
-const PredictionForm = ({ language }: PredictionFormProps) => {
+const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     soilType: '',
     district: '',
@@ -95,6 +96,11 @@ const PredictionForm = ({ language }: PredictionFormProps) => {
     
     setLoading(true);
     setError(null);
+    
+    // Call the onFormSubmit callback with the district
+    if (onFormSubmit) {
+      onFormSubmit(formData.district);
+    }
     
     // Simulate API call with timeout
     setTimeout(() => {
