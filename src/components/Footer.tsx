@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import { WhatsApp, Phone, Mail, MapPin, ChevronRight } from 'lucide-react';
+import { MessageCircle, Phone, Mail, MapPin, ChevronRight } from 'lucide-react';
 
 type FooterProps = {
   language: 'en' | 'hi';
@@ -28,7 +28,7 @@ const Footer = ({ language }: FooterProps) => {
             
             <div className="pt-4">
               <button className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 transition-colors px-4 py-2 rounded-lg">
-                <WhatsApp size={20} />
+                <MessageCircle size={20} />
                 <span>
                   {language === 'en' ? 'Connect on WhatsApp' : 'व्हाट्सएप पर जुड़ें'}
                 </span>
