@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, Globe } from 'lucide-react';
@@ -21,11 +20,11 @@ const Header = ({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="h-10 w-10 mr-3 bg-sugarcane-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-            SY
+          <div className="h-10 w-10 mr-3 bg-white rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+            <img src="/sugar-cane-svgrepo-com (1).svg" className="w-8 h-8 p-1" />
           </div>
           <h1 className="text-xl font-medium tracking-tight hidden md:block">
-            {language === 'en' ? 'Sugarcane Yield Predictor' : 'गन्ना उपज भविष्यवाणी'}
+            {language === 'en' ? 'AgriConnect' : 'एग्रीकनेक्ट'}
           </h1>
         </motion.div>
 

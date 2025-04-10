@@ -1,8 +1,7 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Loader2 } from 'lucide-react';
-import VoiceInput from './VoiceInput';
+import { Loader2 } from 'lucide-react';
+import { fetchWeatherData } from '../services/weatherApi';
 
 type FormData = {
   soilType: string;
@@ -14,7 +13,8 @@ type FormData = {
 
 type PredictionFormProps = {
   language: 'en' | 'hi';
-  onFormSubmit?: (district: string) => void;
+  onFormSubmit?: (weather: string) => void;
+  onPredictionUpdate?: (predictedYield: number) => void;
 };
 
 const soilTypes = [
@@ -30,7 +30,7 @@ const districts = [
   'Aligarh', 'Saharanpur', 'Gorakhpur', 'Faizabad', 'Jhansi'
 ];
 
-const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
+const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: PredictionFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     soilType: '',
     district: '',
@@ -50,11 +50,8 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
   };
   
   const handleVoiceResult = (text: string) => {
-    // Simple parsing logic for the demo
-    // In a real app, you would use NLP to extract structured data
     console.log("Voice input received:", text);
     
-    // Extract soil type
     for (const soil of soilTypes) {
       const searchTerm = language === 'en' ? soil.labelEn.toLowerCase() : soil.labelHi;
       if (text.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -63,7 +60,6 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
       }
     }
     
-    // Extract district
     for (const district of districts) {
       if (text.toLowerCase().includes(district.toLowerCase())) {
         setFormData(prev => ({ ...prev, district }));
@@ -71,7 +67,6 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
       }
     }
     
-    // Extract area (simple number extraction)
     const areaMatch = text.match(/\b(\d+(\.\d+)?)\s*(acre|hectare|एकड़|हेक्टेयर)/i);
     if (areaMatch) {
       const areaValue = areaMatch[1];
@@ -83,10 +78,9 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     if (!formData.soilType || !formData.district || !formData.area) {
       setError(language === 'en' 
         ? 'Please fill all required fields' 
@@ -97,18 +91,24 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
     setLoading(true);
     setError(null);
     
-    // Call the onFormSubmit callback with the district
-    if (onFormSubmit) {
-      onFormSubmit(formData.district);
-    }
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
-      // Mock prediction algorithm (would be replaced with actual ML model)
+    try {
+      const weatherData = await fetchWeatherData(formData.district);
+
+      // Updated weather condition check
+      if (weatherData?.currentConditions?.conditions) {
+        const weatherCondition = weatherData.currentConditions.conditions.toLowerCase();
+        if (onFormSubmit) {
+          onFormSubmit(weatherCondition);
+        }
+      } else {
+        setError(language === 'en' 
+          ? 'Failed to fetch weather data' 
+          : 'मौसम डेटा प्राप्त करने में विफल');
+      }
+
+      // Prediction calculation remains the same
       const areaValue = parseFloat(formData.area);
-      const areaFactor = formData.areaUnit === 'hectares' ? 2.47 : 1; // Convert hectares to acres
-      
-      // Soil type multipliers
+      const areaFactor = formData.areaUnit === 'hectares' ? 2.47 : 1;
       const soilMultipliers: Record<string, number> = {
         alluvial: 85,
         clayLoam: 75,
@@ -116,8 +116,6 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
         loam: 80,
         clayey: 60,
       };
-      
-      // District rainfall factor (simplified)
       const districtFactors: Record<string, number> = {
         Lucknow: 1.1,
         Kanpur: 1.05,
@@ -130,16 +128,23 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
         Faizabad: 1.05,
         Jhansi: 0.9,
       };
-      
-      // Calculate yield in quintals per acre, then multiply by area
+
       const yieldPerAcre = soilMultipliers[formData.soilType] * 
         (districtFactors[formData.district] || 1);
-      
       const totalYield = yieldPerAcre * areaValue * areaFactor;
-      
+
       setPrediction(Math.round(totalYield));
+      if (onPredictionUpdate) {
+        onPredictionUpdate(Math.round(totalYield));
+      }
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      setError(language === 'en' 
+        ? `Error: ${error instanceof Error ? error.message : 'Failed to fetch weather data'}` 
+        : `त्रुटि: ${error instanceof Error ? error.message : 'मौसम डेटा प्राप्त करने में विफल'}`);
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
   
   return (
@@ -150,16 +155,6 @@ const PredictionForm = ({ language, onFormSubmit }: PredictionFormProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-medium text-gray-800">
-            {language === 'en' ? 'Yield Prediction' : 'उपज भविष्यवाणी'}
-          </h2>
-          <VoiceInput 
-            language={language} 
-            onResult={handleVoiceResult} 
-          />
-        </div>
-        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">

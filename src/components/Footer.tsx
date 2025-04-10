@@ -1,12 +1,15 @@
-
 import { motion } from 'framer-motion';
 import { MessageCircle, Phone, Mail, MapPin, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import WhatsAppDialog from './WhatsAppDialog';
 
 type FooterProps = {
   language: 'en' | 'hi';
 };
 
 const Footer = ({ language }: FooterProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   return (
     <footer id="contact" className="w-full bg-sugarcane-800 text-white py-12 mt-16">
       <div className="container mx-auto px-6">
@@ -27,7 +30,10 @@ const Footer = ({ language }: FooterProps) => {
             </p>
             
             <div className="pt-4">
-              <button className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 transition-colors px-4 py-2 rounded-lg">
+              <button 
+                onClick={() => setIsDialogOpen(true)}
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 transition-colors px-4 py-2 rounded-lg text-white"
+              >
                 <MessageCircle size={20} />
                 <span>
                   {language === 'en' ? 'Connect on WhatsApp' : 'व्हाट्सएप पर जुड़ें'}
@@ -112,11 +118,17 @@ const Footer = ({ language }: FooterProps) => {
         <div className="mt-12 pt-6 border-t border-sugarcane-700 text-center text-sugarcane-200 text-sm">
           <p>
             {language === 'en' 
-              ? '© 2023 Sugarcane Yield Prediction System - Uttar Pradesh. All rights reserved.' 
-              : '© 2023 गन्ना उपज भविष्यवाणी प्रणाली - उत्तर प्रदेश। सर्वाधिकार सुरक्षित।'}
+              ? '© 2025 AgriConnect - Uttar Pradesh. All rights reserved.' 
+              : '© 2025 एग्रीकनेक्ट - उत्तर प्रदेश। सर्वाधिकार सुरक्षित।'}
           </p>
         </div>
       </div>
+
+      <WhatsAppDialog 
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        language={language}
+      />
     </footer>
   );
 };

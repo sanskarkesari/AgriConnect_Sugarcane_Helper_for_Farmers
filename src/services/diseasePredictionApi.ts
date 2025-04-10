@@ -25,7 +25,7 @@ export type DiseasePredictionResponse = {
 export const predictDiseaseFromImage = async (image: File): Promise<DiseasePredictionResponse> => {
   try {
     // Replace this with your actual ML model API endpoint
-    const apiUrl = 'https://your-ml-model-api.com/predict'; // Replace with your actual API endpoint
+    const apiUrl = 'https://sugarcane-disease-prediction.onrender.com/predict'; // Replace with your actual API endpoint
     
     // For development, we'll return mock data
     if (process.env.NODE_ENV === 'development') {

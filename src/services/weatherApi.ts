@@ -1,156 +1,128 @@
-
 // Types for weather data
 export type WeatherApiResponse = {
-  location: {
-    name: string;
-    region: string;
-    country: string;
-    lat: number;
-    lon: number;
-  };
-  current: {
-    temp_c: number;
-    temp_f: number;
-    condition: {
-      text: string;
-      icon: string;
-      code: number;
-    };
-    wind_kph: number;
-    wind_mph: number;
+  address: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  currentConditions: {
+    temp: number;
     humidity: number;
-    precip_mm: number;
-    cloud: number;
-    feelslike_c: number;
-    feelslike_f: number;
-    uv: number;
+    windspeed: number;
+    winddir: number;
+    conditions: string;
+    icon: string;
+    sunrise: string;
+    sunset: string;
+    uvindex: number;
+    visibility: number;
   };
-  forecast: {
-    forecastday: Array<{
-      date: string;
-      day: {
-        maxtemp_c: number;
-        mintemp_c: number;
-        avgtemp_c: number;
-        maxwind_kph: number;
-        totalprecip_mm: number;
-        avghumidity: number;
-        condition: {
-          text: string;
-          icon: string;
-          code: number;
-        };
-        uv: number;
-      };
-      astro: {
-        sunrise: string;
-        sunset: string;
-      };
-      hour: Array<{
-        time: string;
-        temp_c: number;
-        condition: {
-          text: string;
-          icon: string;
-          code: number;
-        };
-        precip_mm: number;
-        humidity: number;
-        wind_kph: number;
-      }>;
+  days: Array<{
+    datetime: string;
+    tempmax: number;
+    tempmin: number;
+    temp: number;
+    conditions: string;
+    description: string;
+    humidity: number;
+    precip: number;
+    windspeed: number;
+    sunrise: string;
+    sunset: string;
+    hours: Array<{
+      datetime: string;
+      temp: number;
+      conditions: string;
+      precip: number;
+      humidity: number;
+      windspeed: number;
     }>;
-  };
+  }>;
 };
 
-// Function to fetch weather data for a specific district
-export const fetchWeatherData = async (district: string, days: number = 5): Promise<WeatherApiResponse | null> => {
+// Function to fetch weather data for a specific district using OpenWeather API
+export const fetchWeatherData = async (district: string): Promise<WeatherApiResponse | null> => {
   try {
-    // Replace this with your actual weather API endpoint and API key
-    // For example, using WeatherAPI.com
-    const apiKey = 'YOUR_WEATHER_API_KEY'; // Replace with your actual API key or use environment variables
-    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${district},Uttar Pradesh,India&days=${days}`;
-    
-    // For development, we'll return mock data
-    if (process.env.NODE_ENV === 'development') {
-      return getMockWeatherData(district);
+    const apiKey = 'ae8a479a0660072aa92b17e7e6f1eb1d';
+    const location = `${district}, Uttar Pradesh, India`;
+    const encodedLocation = encodeURIComponent(location);
+
+    // Step 1: Get coordinates
+    const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodedLocation}&limit=1&appid=${apiKey}`;
+    const geoRes = await fetch(geoUrl);
+    const geoData = await geoRes.json();
+
+    if (!geoData.length) throw new Error('Location not found');
+
+    const { lat, lon, name } = geoData[0];
+
+    // Step 2: Get current weather
+    const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+    const currentRes = await fetch(currentUrl);
+    const current = await currentRes.json();
+
+    // Step 3: Get forecast
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+    const forecastRes = await fetch(forecastUrl);
+    const forecast = await forecastRes.json();
+
+    // Step 4: Group forecast by date
+    const groupedByDay: { [key: string]: any[] } = {};
+    for (const item of forecast.list) {
+      const date = item.dt_txt.split(' ')[0];
+      if (!groupedByDay[date]) groupedByDay[date] = [];
+      groupedByDay[date].push(item);
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Weather API error: ${response.status}`);
-    }
-    
-    return await response.json();
+    const days = Object.entries(groupedByDay).map(([date, hourlyData]) => {
+      const temps = hourlyData.map((h) => h.main.temp);
+      const humidities = hourlyData.map((h) => h.main.humidity);
+      const windspeeds = hourlyData.map((h) => h.wind.speed);
+      const descriptions = hourlyData.map((h) => h.weather[0].description);
+
+      return {
+        datetime: date,
+        tempmax: Math.max(...temps),
+        tempmin: Math.min(...temps),
+        temp: temps.reduce((a, b) => a + b) / temps.length,
+        conditions: hourlyData[0].weather[0].main,
+        description: descriptions[0],
+        humidity: humidities.reduce((a, b) => a + b) / humidities.length,
+        precip: hourlyData[0].pop ?? 0,
+        windspeed: windspeeds.reduce((a, b) => a + b) / windspeeds.length,
+        sunrise: current.sys.sunrise ? new Date(current.sys.sunrise * 1000).toLocaleTimeString() : '06:00',
+        sunset: current.sys.sunset ? new Date(current.sys.sunset * 1000).toLocaleTimeString() : '18:00',
+        hours: hourlyData.map((h) => ({
+          datetime: h.dt_txt,
+          temp: h.main.temp,
+          conditions: h.weather[0].main,
+          precip: h.pop ?? 0,
+          humidity: h.main.humidity,
+          windspeed: h.wind.speed
+        }))
+      };
+    });
+
+    return {
+      address: `${name}, Uttar Pradesh, India`,
+      latitude: lat,
+      longitude: lon,
+      timezone: forecast.city.timezone?.toString() ?? 'Asia/Kolkata',
+      currentConditions: {
+        temp: current.main.temp,
+        humidity: current.main.humidity,
+        windspeed: current.wind.speed,
+        winddir: current.wind.deg,
+        conditions: current.weather[0].main,
+        icon: current.weather[0].icon,
+        sunrise: new Date(current.sys.sunrise * 1000).toLocaleTimeString(),
+        sunset: new Date(current.sys.sunset * 1000).toLocaleTimeString(),
+        uvindex: 0, // OpenWeather's free tier does not return UV index
+        visibility: current.visibility / 1000 // Convert to km
+      },
+      days
+    };
   } catch (error) {
     console.error('Error fetching weather data:', error);
     return null;
   }
-};
-
-// Mock data for development
-const getMockWeatherData = (district: string): WeatherApiResponse => {
-  // Generate random weather data for the district
-  const current = {
-    temp_c: 25 + Math.random() * 10,
-    temp_f: 77 + Math.random() * 18,
-    condition: {
-      text: Math.random() > 0.7 ? 'Partly cloudy' : Math.random() > 0.4 ? 'Sunny' : 'Light rain',
-      icon: '//cdn.weatherapi.com/weather/64x64/day/116.png',
-      code: 1003
-    },
-    wind_kph: 5 + Math.random() * 15,
-    wind_mph: 3 + Math.random() * 9,
-    humidity: 60 + Math.random() * 30,
-    precip_mm: Math.random() * 5,
-    cloud: Math.random() * 100,
-    feelslike_c: 25 + Math.random() * 10,
-    feelslike_f: 77 + Math.random() * 18,
-    uv: 5 + Math.random() * 5
-  };
-
-  const forecastDays = [];
-  const today = new Date();
-  
-  for (let i = 0; i < 5; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    forecastDays.push({
-      date: dateStr,
-      day: {
-        maxtemp_c: current.temp_c + Math.random() * 5,
-        mintemp_c: current.temp_c - Math.random() * 5,
-        avgtemp_c: current.temp_c,
-        maxwind_kph: current.wind_kph + Math.random() * 10,
-        totalprecip_mm: Math.random() * 10,
-        avghumidity: current.humidity,
-        condition: {
-          text: current.condition.text,
-          icon: current.condition.icon,
-          code: current.condition.code
-        },
-        uv: current.uv
-      },
-      astro: {
-        sunrise: '06:30 AM',
-        sunset: '06:30 PM'
-      },
-      hour: []
-    });
-  }
-
-  return {
-    location: {
-      name: district,
-      region: 'Uttar Pradesh',
-      country: 'India',
-      lat: 26.85 + Math.random(),
-      lon: 80.91 + Math.random()
-    },
-    current: current,
-    forecast: {
-      forecastday: forecastDays
-    }
-  };
 };

@@ -2,7 +2,7 @@
 // Simple utility for translation
 export const translations = {
   en: {
-    title: 'Sugarcane Yield Prediction System',
+    title: 'SugarCane Helper for Farmers',
     subtitle: 'Helping farmers in Uttar Pradesh maximize their sugarcane production',
     heroText: 'Make data-driven decisions to improve your sugarcane yield with our advanced prediction system.',
     getStarted: 'Get Started',
@@ -18,7 +18,7 @@ export const translations = {
     feature4Desc: 'Get assistance and updates directly on WhatsApp for convenient access to information.',
   },
   hi: {
-    title: 'गन्ना उपज भविष्यवाणी प्रणाली',
+    title: 'किसानों के लिए गन्ना सहायक',
     subtitle: 'उत्तर प्रदेश के किसानों को उनके गन्ना उत्पादन को अधिकतम करने में मदद करना',
     heroText: 'हमारी उन्नत भविष्यवाणी प्रणाली के साथ अपनी गन्ना उपज में सुधार के लिए डेटा-संचालित निर्णय लें।',
     getStarted: 'शुरू करें',

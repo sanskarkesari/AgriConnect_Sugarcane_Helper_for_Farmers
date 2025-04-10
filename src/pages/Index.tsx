@@ -28,8 +28,8 @@ const Index = () => {
         <section className="relative w-full h-[500px] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-sugarcane-800/90 to-sugarcane-700/80 z-10"></div>
           <div 
-            className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599688619074-f442b2597aee?q=80&w=2071')] bg-cover bg-center"
-            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1599688619074-f442b2597aee?q=80&w=2071')" }}
+            className="absolute inset-0 bg-[url('https://img.freepik.com/free-photo/young-green-corn-growing-field-background_169016-13755.jpg?ga=GA1.1.2124949761.1725031975&semt=ais_hybrid&w=740')] bg-cover bg-center"
+            style={{ backgroundImage: "url('https://img.freepik.com/free-photo/botanical-bamboo-forest-daylight_23-2149011404.jpg?ga=GA1.1.2124949761.1725031975&semt=ais_hybrid&w=740')" }}
           ></div>
           
           <div className="container mx-auto px-6 h-full flex items-center relative z-20">
