@@ -1,3 +1,4 @@
+// Header.tsx
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, Globe } from 'lucide-react';
@@ -31,7 +32,11 @@ const Header = ({
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
           <button 
-            onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+            onClick={() => {
+              const newLang = language === 'en' ? 'hi' : 'en';
+              console.log('Toggling to language:', newLang); // Debug log
+              setLanguage(newLang);
+            }}
             className="flex items-center space-x-2 text-sm font-medium text-gray-600 hover:text-sugarcane-700 transition-all"
           >
             <Globe size={18} />
@@ -109,7 +114,9 @@ const Header = ({
             </a>
             <button 
               onClick={() => {
-                setLanguage(language === 'en' ? 'hi' : 'en');
+                const newLang = language === 'en' ? 'hi' : 'en';
+                console.log('Toggling to language (mobile):', newLang); // Debug log
+                setLanguage(newLang);
                 setMobileMenuOpen(false);
               }}
               className="flex items-center space-x-2 text-sm font-medium text-gray-600 hover:text-sugarcane-700 py-2"

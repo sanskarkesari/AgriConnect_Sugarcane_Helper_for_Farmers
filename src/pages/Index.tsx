@@ -1,5 +1,5 @@
-
-import { useState } from 'react';
+// Index.tsx
+import { useState, useCallback } from 'react'; // Added useCallback for optimization
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
 import PredictionForm from '../components/PredictionForm';
@@ -11,14 +11,26 @@ import { getTranslation } from '../utils/translationUtils';
 
 const Index = () => {
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  console.log('Index language:', language); // Debug log
   const [activeDistrict, setActiveDistrict] = useState<string | null>(null);
   const [showWeather, setShowWeather] = useState(false);
-  
+  const [predictedYield, setPredictedYield] = useState<number | null>(null);
+
   const handlePredictionFormSubmit = (district: string) => {
+    console.log('Received district from form:', district);
     setActiveDistrict(district);
     setShowWeather(true);
   };
-  
+
+  const handlePredictionUpdate = (yieldValue: number) => {
+    setPredictedYield(yieldValue);
+  };
+
+  // Force re-render check with useCallback
+  const forceUpdate = useCallback(() => {
+    console.log('Force update triggered with language:', language);
+  }, [language]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header language={language} setLanguage={setLanguage} />
@@ -173,9 +185,10 @@ const Index = () => {
           <div className="container mx-auto px-6 space-y-16">
             <AskDoubt language={language} />
             
-            <PredictionForm 
-              language={language} 
-              onFormSubmit={handlePredictionFormSubmit} 
+            <PredictionForm
+              language={language}
+              onFormSubmit={handlePredictionFormSubmit}
+              onPredictionUpdate={handlePredictionUpdate}
             />
             
             {showWeather && activeDistrict && (
@@ -184,7 +197,7 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <WeatherDisplay language={language} district={activeDistrict} />
+                <WeatherDisplay language={language} district={activeDistrict} predictedYield={predictedYield} />
               </motion.div>
             )}
             

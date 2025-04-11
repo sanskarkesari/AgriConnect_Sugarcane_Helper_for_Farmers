@@ -1,3 +1,4 @@
+// PredictionForm.tsx
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -13,7 +14,7 @@ type FormData = {
 
 type PredictionFormProps = {
   language: 'en' | 'hi';
-  onFormSubmit?: (weather: string) => void;
+  onFormSubmit: (district: string) => void;
   onPredictionUpdate?: (predictedYield: number) => void;
 };
 
@@ -26,8 +27,8 @@ const soilTypes = [
 ];
 
 const districts = [
-  'Lucknow', 'Kanpur', 'Meerut', 'Bareilly', 'Moradabad', 
-  'Aligarh', 'Saharanpur', 'Gorakhpur', 'Faizabad', 'Jhansi'
+  'Lucknow', 'Kanpur', 'Meerut', 'Bareilly', 'Moradabad',
+  'Aligarh', 'Saharanpur', 'Gorakhpur', 'Faizabad', 'Jhansi',
 ];
 
 const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: PredictionFormProps) => {
@@ -80,11 +81,22 @@ const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: Predicti
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.soilType || !formData.district || !formData.area) {
-      setError(language === 'en' 
-        ? 'Please fill all required fields' 
-        : 'कृपया सभी आवश्यक फ़ील्ड भरें');
+
+    const cleanedDistrict = formData.district.trim();
+    if (!formData.soilType || !cleanedDistrict || !formData.area) {
+      setError(
+        language === 'en'
+          ? 'Please fill all required fields'
+          : 'कृपया सभी आवश्यक फ़ील्ड भरें'
+      );
+      return;
+    }
+    if (!districts.includes(cleanedDistrict)) {
+      setError(
+        language === 'en'
+          ? 'Please select a valid district'
+          : 'कृपया एक वैध जिला चुनें'
+      );
       return;
     }
     
@@ -92,21 +104,18 @@ const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: Predicti
     setError(null);
     
     try {
-      const weatherData = await fetchWeatherData(formData.district);
+      const weatherData = await fetchWeatherData(cleanedDistrict);
 
-      // Updated weather condition check
       if (weatherData?.currentConditions?.conditions) {
-        const weatherCondition = weatherData.currentConditions.conditions.toLowerCase();
-        if (onFormSubmit) {
-          onFormSubmit(weatherCondition);
-        }
+        onFormSubmit(cleanedDistrict); // Pass district to parent
       } else {
-        setError(language === 'en' 
-          ? 'Failed to fetch weather data' 
-          : 'मौसम डेटा प्राप्त करने में विफल');
+        setError(
+          language === 'en'
+            ? 'Failed to fetch weather data'
+            : 'मौसम डेटा प्राप्त करने में विफल'
+        );
       }
 
-      // Prediction calculation remains the same
       const areaValue = parseFloat(formData.area);
       const areaFactor = formData.areaUnit === 'hectares' ? 2.47 : 1;
       const soilMultipliers: Record<string, number> = {
@@ -129,8 +138,7 @@ const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: Predicti
         Jhansi: 0.9,
       };
 
-      const yieldPerAcre = soilMultipliers[formData.soilType] * 
-        (districtFactors[formData.district] || 1);
+      const yieldPerAcre = soilMultipliers[formData.soilType] * (districtFactors[cleanedDistrict] || 1);
       const totalYield = yieldPerAcre * areaValue * areaFactor;
 
       setPrediction(Math.round(totalYield));
@@ -139,9 +147,11 @@ const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: Predicti
       }
     } catch (error) {
       console.error('Error fetching weather data:', error);
-      setError(language === 'en' 
-        ? `Error: ${error instanceof Error ? error.message : 'Failed to fetch weather data'}` 
-        : `त्रुटि: ${error instanceof Error ? error.message : 'मौसम डेटा प्राप्त करने में विफल'}`);
+      setError(
+        language === 'en'
+          ? `Error: ${error instanceof Error ? error.message : 'Failed to fetch weather data'}`
+          : `त्रुटि: ${error instanceof Error ? error.message : 'मौसम डेटा प्राप्त करने में विफल'}`
+      );
     } finally {
       setLoading(false);
     }

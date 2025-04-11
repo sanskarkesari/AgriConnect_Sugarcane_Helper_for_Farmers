@@ -1,12 +1,14 @@
+// WeatherDisplay.tsx
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CloudRain, CloudSun, Droplets, Wind, Thermometer, Calendar, Sun } from 'lucide-react';
-import { fetchWeatherData } from '../services/weatherApi';
+import { CloudRain, CloudSun, Droplets, Wind, Thermometer, Calendar, Sun, Cloud, CloudLightning, CloudFog } from 'lucide-react';
+import { fetchWeatherData, WeatherApiResponse } from '../services/weatherApi';
+import FarmingGuidelines from './FarmingGuidelines';
 
 type WeatherDisplayProps = {
   language: 'en' | 'hi';
   district: string;
-  onWeatherUpdate?: (weatherData: WeatherData[]) => void;
+  predictedYield?: number;
 };
 
 type WeatherData = {
@@ -20,7 +22,9 @@ type WeatherData = {
   icon: string;
 };
 
-const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayProps) => {
+const WeatherDisplay = ({ language, district, predictedYield }: WeatherDisplayProps) => {
+  console.log('WeatherDisplay language:', language);
+
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentWeather, setCurrentWeather] = useState<{
@@ -32,12 +36,30 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
     sunrise: string;
     sunset: string;
   } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const getSeason = (): 'summer' | 'monsoon' | 'winter' => {
+    const month = new Date().getMonth() + 1;
+    if (month >= 3 && month <= 5) return 'summer';
+    if (month >= 6 && month <= 9) return 'monsoon';
+    return 'winter';
+  };
+
+  const season = getSeason();
 
   useEffect(() => {
     const fetchWeather = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const data = await fetchWeatherData(district);
+        const cleanedDistrict = district.trim();
+        console.log('WeatherDisplay fetching for district:', cleanedDistrict);
+
+        if (!cleanedDistrict) {
+          throw new Error('No district provided');
+        }
+
+        const data = await fetchWeatherData(cleanedDistrict);
         if (data) {
           setCurrentWeather({
             temp: data.currentConditions.temp,
@@ -46,10 +68,10 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
             humidity: data.currentConditions.humidity,
             windSpeed: data.currentConditions.windspeed,
             sunrise: data.currentConditions.sunrise,
-            sunset: data.currentConditions.sunset
+            sunset: data.currentConditions.sunset,
           });
 
-          const parsedData = data.days.map(day => ({
+          const parsedData = data.days.map((day) => ({
             date: day.datetime,
             condition: getConditionType(day.conditions),
             tempMax: day.tempmax,
@@ -57,14 +79,16 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
             humidity: day.humidity,
             rainfall: day.precip,
             windSpeed: day.windspeed,
-            icon: day.icon
+            icon: day.icon,
           }));
 
           setWeatherData(parsedData);
-          onWeatherUpdate?.(parsedData);
+        } else {
+          throw new Error('Failed to fetch weather data');
         }
       } catch (error) {
         console.error('Error fetching weather data:', error);
+        setError(error.message || 'An error occurred while fetching weather data');
       } finally {
         setLoading(false);
       }
@@ -72,8 +96,11 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
 
     if (district) {
       fetchWeather();
+    } else {
+      setLoading(false);
+      setError('No district provided');
     }
-  }, [district, onWeatherUpdate]);
+  }, [district]);
 
   const getConditionType = (condition: string): 'sunny' | 'cloudy' | 'rainy' => {
     const lowerCondition = condition.toLowerCase();
@@ -82,25 +109,23 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
     return 'sunny';
   };
 
-  const getWeatherIcon = (condition: string, iconCode?: string) => {
-    if (iconCode) {
-      return (
-        <img 
-          src={`https://openweathermap.org/img/wn/${iconCode}@2x.png`} 
-          alt={condition}
-          className="w-12 h-12"
-        />
-      );
-    }
+  const getWeatherIcon = (condition: string) => {
+    const conditionType = getConditionType(condition);
+    
+    // Hardcoded icon URLs from Flaticon
+    const iconUrls = {
+      sunny: 'https://cdn-icons-png.flaticon.com/512/3222/3222675.png',
+      cloudy: 'https://cdn-icons-png.flaticon.com/512/414/414825.png',
+      rainy: 'https://cdn-icons-png.flaticon.com/512/4150/4150904.png'
+    };
 
-    switch (condition) {
-      case 'rainy':
-        return <CloudRain size={32} className="text-blue-500" />;
-      case 'cloudy':
-        return <CloudSun size={32} className="text-gray-500" />;
-      default:
-        return <Sun size={32} className="text-yellow-500" />;
-    }
+    return (
+      <img
+        src={iconUrls[conditionType]}
+        alt={conditionType}
+        className="w-12 h-12"
+      />
+    );
   };
 
   const getWeatherLabel = (condition: string) => {
@@ -122,8 +147,10 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
   };
 
   const averageRainfall = weatherData.length
-  ? (weatherData.reduce((sum, day) => sum + day.rainfall, 0) / weatherData.length)
-  : 0;
+    ? weatherData.reduce((sum, day) => sum + day.rainfall, 0) / weatherData.length
+    : 0;
+
+  const currentCondition = currentWeather?.condition ? getConditionType(currentWeather.condition) : 'sunny';
 
   return (
     <div id="weather" className="w-full">
@@ -151,6 +178,8 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
           <div className="h-48 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
           </div>
+        ) : error ? (
+          <div className="text-center text-red-600">{language === 'en' ? error : 'त्रुटि: मौसम डेटा लोड नहीं हुआ'}</div>
         ) : (
           <>
             {currentWeather && (
@@ -158,7 +187,7 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center">
                     <div className="p-2 bg-white rounded-full shadow-soft mr-4">
-                      {getWeatherIcon(currentWeather.condition, currentWeather.icon)}
+                      {getWeatherIcon(currentWeather.condition)}
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-600">
@@ -172,7 +201,6 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
                       </p>
                     </div>
                   </div>
-                  
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center">
                       <Droplets size={16} className="mr-1 text-blue-500" />
@@ -227,14 +255,14 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
                 >
                   <div className="flex items-center text-sm text-gray-600 mb-2">
                     <Calendar size={14} className="mr-1" />
-                    <span>{new Date(day.date).toLocaleDateString(language === 'en' ? 'en-US' : 'hi-IN', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    <span>{new Date(day.date).toLocaleDateString(language === 'en' ? 'en-US' : 'hi-IN', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
                     })}</span>
                   </div>
 
-                  <div className="my-2">{getWeatherIcon(day.condition, day.icon)}</div>
+                  <div className="my-2">{getWeatherIcon(day.condition)}</div>
 
                   <div className="text-center mb-3">
                     <span className="text-sm font-medium">{getWeatherLabel(day.condition)}</span>
@@ -266,11 +294,28 @@ const WeatherDisplay = ({ language, district, onWeatherUpdate }: WeatherDisplayP
               ))}
             </div>
 
+            {/* Farming Guidelines Section */}
+            {currentWeather && (
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FarmingGuidelines
+                  weather={currentCondition}
+                  season={season}
+                  language={language}
+                  
+                />
+              </motion.div>
+            )}
+
             <div className="mt-6 text-sm text-gray-500">
               <p>
                 {language === 'en'
-                  ? 'Weather data provided by OpenWeatherMap. Historical data shows that weather patterns significantly impact sugarcane yield in Uttar Pradesh.'
-                  : 'मौसम डेटा OpenWeatherMap द्वारा प्रदान किया गया है। ऐतिहासिक डेटा दिखाता है कि मौसम के पैटर्न उत्तर प्रदेश में गन्ने की उपज को महत्वपूर्ण रूप से प्रभावित करते हैं।'}
+                  ? 'Historical data shows that weather patterns significantly impact sugarcane yield in Uttar Pradesh.'
+                  : 'ऐतिहासिक डेटा दिखाता है कि मौसम के पैटर्न उत्तर प्रदेश में गन्ने की उपज को महत्वपूर्ण रूप से प्रभावित करते हैं।'}
               </p>
             </div>
           </>

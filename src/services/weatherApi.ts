@@ -1,4 +1,4 @@
-// Types for weather data
+// weatherApi.ts
 export type WeatherApiResponse = {
   address: string;
   latitude: number;
@@ -28,6 +28,7 @@ export type WeatherApiResponse = {
     windspeed: number;
     sunrise: string;
     sunset: string;
+    icon: string; // Ensure icon is included in the type
     hours: Array<{
       datetime: string;
       temp: number;
@@ -39,14 +40,13 @@ export type WeatherApiResponse = {
   }>;
 };
 
-// Function to fetch weather data for a specific district using OpenWeather API
 export const fetchWeatherData = async (district: string): Promise<WeatherApiResponse | null> => {
   try {
     const apiKey = 'ae8a479a0660072aa92b17e7e6f1eb1d';
-    const location = `${district}, Uttar Pradesh, India`;
+    const location = `${district.trim()}, Uttar Pradesh, India`;
     const encodedLocation = encodeURIComponent(location);
+    console.log('Fetching weather for encoded location:', encodedLocation); // Debug log
 
-    // Step 1: Get coordinates
     const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodedLocation}&limit=1&appid=${apiKey}`;
     const geoRes = await fetch(geoUrl);
     const geoData = await geoRes.json();
@@ -55,17 +55,14 @@ export const fetchWeatherData = async (district: string): Promise<WeatherApiResp
 
     const { lat, lon, name } = geoData[0];
 
-    // Step 2: Get current weather
     const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
     const currentRes = await fetch(currentUrl);
     const current = await currentRes.json();
 
-    // Step 3: Get forecast
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
     const forecastRes = await fetch(forecastUrl);
     const forecast = await forecastRes.json();
 
-    // Step 4: Group forecast by date
     const groupedByDay: { [key: string]: any[] } = {};
     for (const item of forecast.list) {
       const date = item.dt_txt.split(' ')[0];
@@ -78,6 +75,8 @@ export const fetchWeatherData = async (district: string): Promise<WeatherApiResp
       const humidities = hourlyData.map((h) => h.main.humidity);
       const windspeeds = hourlyData.map((h) => h.wind.speed);
       const descriptions = hourlyData.map((h) => h.weather[0].description);
+      // Use the icon from the first hour's data as a representative icon for the day
+      const icon = hourlyData[0].weather[0].icon; // Add icon for the day
 
       return {
         datetime: date,
@@ -91,14 +90,15 @@ export const fetchWeatherData = async (district: string): Promise<WeatherApiResp
         windspeed: windspeeds.reduce((a, b) => a + b) / windspeeds.length,
         sunrise: current.sys.sunrise ? new Date(current.sys.sunrise * 1000).toLocaleTimeString() : '06:00',
         sunset: current.sys.sunset ? new Date(current.sys.sunset * 1000).toLocaleTimeString() : '18:00',
+        icon, // Assign the icon
         hours: hourlyData.map((h) => ({
           datetime: h.dt_txt,
           temp: h.main.temp,
           conditions: h.weather[0].main,
           precip: h.pop ?? 0,
           humidity: h.main.humidity,
-          windspeed: h.wind.speed
-        }))
+          windspeed: h.wind.speed,
+        })),
       };
     });
 
@@ -116,10 +116,10 @@ export const fetchWeatherData = async (district: string): Promise<WeatherApiResp
         icon: current.weather[0].icon,
         sunrise: new Date(current.sys.sunrise * 1000).toLocaleTimeString(),
         sunset: new Date(current.sys.sunset * 1000).toLocaleTimeString(),
-        uvindex: 0, // OpenWeather's free tier does not return UV index
-        visibility: current.visibility / 1000 // Convert to km
+        uvindex: 0,
+        visibility: current.visibility / 1000,
       },
-      days
+      days,
     };
   } catch (error) {
     console.error('Error fetching weather data:', error);
