@@ -119,23 +119,23 @@ const PredictionForm = ({ language, onFormSubmit, onPredictionUpdate }: Predicti
       const areaValue = parseFloat(formData.area);
       const areaFactor = formData.areaUnit === 'hectares' ? 2.47 : 1;
       const soilMultipliers: Record<string, number> = {
-        alluvial: 85,
+        alluvial: 90,
         clayLoam: 75,
         sandyLoam: 65,
-        loam: 80,
+        loam: 85,
         clayey: 60,
       };
       const districtFactors: Record<string, number> = {
-        Lucknow: 1.1,
+        Lucknow: 1.15,
         Kanpur: 1.05,
-        Meerut: 1.2,
+        Meerut: 1.25,
         Bareilly: 1.15,
         Moradabad: 1.1,
-        Aligarh: 1.0,
-        Saharanpur: 1.25,
-        Gorakhpur: 1.15,
+        Aligarh: 1.05,
+        Saharanpur: 1.2,
+        Gorakhpur: 1.1,
         Faizabad: 1.05,
-        Jhansi: 0.9,
+        Jhansi: 0.95,
       };
 
       const yieldPerAcre = soilMultipliers[formData.soilType] * (districtFactors[cleanedDistrict] || 1);

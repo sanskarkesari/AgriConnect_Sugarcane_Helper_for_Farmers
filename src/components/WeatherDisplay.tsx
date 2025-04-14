@@ -1,4 +1,3 @@
-// WeatherDisplay.tsx
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CloudRain, CloudSun, Droplets, Wind, Thermometer, Calendar, Sun, Cloud, CloudLightning, CloudFog } from 'lucide-react';
@@ -104,15 +103,16 @@ const WeatherDisplay = ({ language, district, predictedYield }: WeatherDisplayPr
 
   const getConditionType = (condition: string): 'sunny' | 'cloudy' | 'rainy' => {
     const lowerCondition = condition.toLowerCase();
-    if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) return 'rainy';
-    if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast')) return 'cloudy';
-    return 'sunny';
+    if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) return 'rainy';
+    if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast') || lowerCondition.includes('fog')) return 'cloudy';
+    if (lowerCondition.includes('clear') || lowerCondition.includes('sun')) return 'sunny';
+    console.warn('Unknown condition, defaulting to sunny:', condition);
+    return 'sunny'; // Default fallback
   };
 
   const getWeatherIcon = (condition: string) => {
     const conditionType = getConditionType(condition);
     
-    // Hardcoded icon URLs from Flaticon
     const iconUrls = {
       sunny: 'https://cdn-icons-png.flaticon.com/512/3222/3222675.png',
       cloudy: 'https://cdn-icons-png.flaticon.com/512/414/414825.png',
@@ -306,7 +306,7 @@ const WeatherDisplay = ({ language, district, predictedYield }: WeatherDisplayPr
                   weather={currentCondition}
                   season={season}
                   language={language}
-                  
+                  predictedYield={predictedYield}
                 />
               </motion.div>
             )}

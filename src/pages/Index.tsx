@@ -1,5 +1,5 @@
 // Index.tsx
-import { useState, useCallback } from 'react'; // Added useCallback for optimization
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
 import PredictionForm from '../components/PredictionForm';
@@ -8,6 +8,7 @@ import WeatherDisplay from '../components/WeatherDisplay';
 import Footer from '../components/Footer';
 import AskDoubt from '../components/AskDoubt';
 import { getTranslation } from '../utils/translationUtils';
+import WhatsAppDialog from '../components/WhatsAppDialog'; // Import the new component
 
 const Index = () => {
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
@@ -15,6 +16,7 @@ const Index = () => {
   const [activeDistrict, setActiveDistrict] = useState<string | null>(null);
   const [showWeather, setShowWeather] = useState(false);
   const [predictedYield, setPredictedYield] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State for dialog
 
   const handlePredictionFormSubmit = (district: string) => {
     console.log('Received district from form:', district);
@@ -67,12 +69,12 @@ const Index = () => {
                     {getTranslation('getStarted', language)}
                   </motion.a>
                   <motion.a
-                    href="#features"
+                    onClick={() => setIsDialogOpen(true)} // Trigger WhatsApp dialog
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-3 rounded-lg font-medium text-center"
+                    className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-3 rounded-lg font-medium text-center cursor-pointer"
                   >
-                    {getTranslation('learnMore', language)}
+                    {getTranslation('connectWhatsApp', language)}
                   </motion.a>
                 </div>
               </motion.div>
@@ -207,6 +209,7 @@ const Index = () => {
       </main>
       
       <Footer language={language} />
+      <WhatsAppDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} language={language} /> {/* Add the dialog */}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-
+// translationUtils.js
 // Simple utility for translation
 export const translations = {
   en: {
@@ -16,6 +16,7 @@ export const translations = {
     feature3Desc: 'Access real-time weather data and forecasts to plan your farming activities effectively.',
     feature4Title: 'WhatsApp Support',
     feature4Desc: 'Get assistance and updates directly on WhatsApp for convenient access to information.',
+    connectWhatsApp: 'Connect to WhatsApp', // New entry for WhatsApp button
   },
   hi: {
     title: 'किसानों के लिए गन्ना सहायक',
@@ -32,7 +33,8 @@ export const translations = {
     feature3Desc: 'अपनी कृषि गतिविधियों की प्रभावी रूप से योजना बनाने के लिए रीयल-टाइम मौसम डेटा और पूर्वानुमान तक पहुंचें।',
     feature4Title: 'व्हाट्सएप समर्थन',
     feature4Desc: 'जानकारी तक सुविधाजनक पहुंच के लिए सीधे व्हाट्सएप पर सहायता और अपडेट प्राप्त करें।',
-  }
+    connectWhatsApp: 'व्हाट्सएप से कनेक्ट करें', // New entry for WhatsApp button
+  },
 };
 
 // Type for translation keys

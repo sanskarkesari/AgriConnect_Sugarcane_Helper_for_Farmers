@@ -76,12 +76,7 @@ const Footer = ({ language }: FooterProps) => {
                   {language === 'en' ? 'Farming Tips' : 'खेती के टिप्स'}
                 </span>
               </a>
-              <a href="#" className="flex items-center text-sugarcane-100 hover:text-white transition-colors">
-                <ChevronRight size={16} className="mr-2 text-sugarcane-400" />
-                <span>
-                  {language === 'en' ? 'Government Schemes' : 'सरकारी योजनाएं'}
-                </span>
-              </a>
+
             </nav>
           </motion.div>
           

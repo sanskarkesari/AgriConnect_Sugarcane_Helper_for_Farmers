@@ -12,45 +12,50 @@ const WhatsAppDialog = ({ isOpen, onClose, language }: WhatsAppDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const handleConnect = async () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      alert(language === 'en' ? 'Please enter a valid phone number' : 'कृपया एक वैध फोन नंबर दर्ज करें');
-      return;
-    }
 
-    setIsLoading(true);
-    setStatus('loading');
 
-    try {
-      const response = await fetch('/api/whatsapp-connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phoneNumber: phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setStatus('success');
-        setTimeout(() => {
-          onClose();
-          setPhoneNumber('');
-          setStatus('idle');
-        }, 2000);
-      } else {
-        throw new Error(data.message);
+    const handleConnect = async () => {
+      if (!phoneNumber || phoneNumber.length < 10) {
+        alert(language === 'en' ? 'Please enter a valid phone number' : 'कृपया एक वैध फोन नंबर दर्ज करें');
+        return;
       }
-    } catch (error) {
-      setStatus('error');
-      console.error('Error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    
+      setIsLoading(true);
+      setStatus('loading');
+      console.log('Sending request to /api/whatsapp-connect with phoneNumber:', phoneNumber);
+    
+      try {
+        const response = await fetch('http://localhost:3000/api/whatsapp-connect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phoneNumber: phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`,
+          }),
+        });
+    
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+    
+        if (data.success) {
+          setStatus('success');
+          setTimeout(() => {
+            onClose();
+            setPhoneNumber('');
+            setStatus('idle');
+          }, 2000);
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (error) {
+        setStatus('error');
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   if (!isOpen) return null;
 
